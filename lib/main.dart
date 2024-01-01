@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
         home: Scaffold(
       appBar: AppBar(
-        title: const Text('My First App'),
+        title: const Text('My Name is Chamod'),
       ),
     ));
   }
