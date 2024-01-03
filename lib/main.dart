@@ -1,87 +1,160 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:string_validator/string_validator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'user_data.dart';
+
+GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: TextBox(),
     );
   }
 }
 
 class TextBox extends StatefulWidget {
-  const TextBox({super.key});
+  const TextBox({Key? key}) : super(key: key);
 
   @override
   State<TextBox> createState() => _TextBoxState();
 }
 
 class _TextBoxState extends State<TextBox> {
-  final myController = TextEditingController();
+  final userNameContr = TextEditingController();
+  final simNumberContr = TextEditingController();
+  late SharedPreferences prefs;
+
+  String buttonText = 'Show User';
+  bool showError = false;
+  late String errorMsg; // Initializing button text
 
   @override
   void dispose() {
-    // Clean up the controller when the widget is disposed.
-    myController.dispose();
+    userNameContr.dispose();
+    simNumberContr.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    initPrefs();
+    super.initState();
+  }
+
+  void initPrefs() async {
+    prefs = await SharedPreferences.getInstance();
+  }
+
+  void showToastmessage(BuildContext context, String name, String simNumber) {
+    SnackBar snackBar = SnackBar(
+      content: Text('$name has been created with $simNumber'),
+    );
+
+    // Find the ScaffoldMessenger in the widget tree
+    // and use it to show a SnackBar.
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     double objectWidth = screenWidth * 0.75;
+    late UserData? user;
+
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('G10A'),
-        ),
-        body: Center(
-            child: SizedBox(
+      appBar: AppBar(
+        title: const Text('G10A'),
+      ),
+      body: Center(
+        child: SizedBox(
           width: objectWidth,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TextField(
-                controller: myController,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Enter the sim number',
+              SizedBox(
+                height: 100,
+                child: TextFormField(
+                  controller: userNameContr,
+                  decoration: InputDecoration(
+                      border: const OutlineInputBorder(),
+                      errorText: showError ? errorMsg : null,
+                      labelText: 'User Name'),
                 ),
               ),
-              const SubmitButton()
+              SizedBox(
+                height: 100,
+                child: TextFormField(
+                  controller: simNumberContr,
+                  decoration: InputDecoration(
+                      border: const OutlineInputBorder(),
+                      errorText: showError ? errorMsg : null,
+                      labelText: 'Sim Number'),
+                ),
+              ),
+              SubmitButton(
+                buttonText: 'Create User',
+                onButtonPressed: () {
+                  // Validating the user input to the sim number field
+                  if (isNumeric(simNumberContr.text) == false) {
+                    showError = true;
+                    errorMsg = 'Letters are no allowed';
+                  } else {
+                    user = UserData(
+                      username: userNameContr.text,
+                      simNumber: simNumberContr.text,
+                    );
+                    showToastmessage(context, user!.username, user!.simNumber);
+                  }
+                },
+              ),
+              SubmitButton(
+                buttonText: buttonText,
+                onButtonPressed: () {
+                  // Validating the user input to the sim number field
+                  setState(() {
+                    if (user == null) {
+                      buttonText = 'No user created';
+                    } else {
+                      buttonText = user!.username;
+                    }
+                  });
+                },
+              ),
             ],
           ),
-        )));
+        ),
+      ),
+    );
   }
 }
 
-class SubmitButton extends StatefulWidget {
-  const SubmitButton({super.key});
+class SubmitButton extends StatelessWidget {
+  final String buttonText;
+  final VoidCallback onButtonPressed;
 
-  @override
-  State<SubmitButton> createState() => _SubmitButtonState();
-}
+  const SubmitButton({
+    Key? key,
+    required this.buttonText,
+    required this.onButtonPressed,
+  }) : super(key: key);
 
-class _SubmitButtonState extends State<SubmitButton> {
-  bool isClicked = false;
-  String buttonText = 'Clicked';
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-        onPressed: () {
-          setState(() {
-            isClicked = !isClicked;
-            if (isClicked) {
-              buttonText = 'Not Clicked';
-            } else {
-              buttonText = 'Clicked';
-            }
-          });
-        },
-        child: Text(buttonText));
+      onPressed: onButtonPressed,
+      child: Text(buttonText),
+    );
   }
 }
