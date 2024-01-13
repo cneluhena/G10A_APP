@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:string_validator/string_validator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,6 +32,7 @@ class _TextBoxState extends State<TextBox> {
   final userNameContr = TextEditingController();
   final simNumberContr = TextEditingController();
   late SharedPreferences prefs;
+  final _formKey = GlobalKey<FormState>();
 
   String buttonText = 'Show User';
   bool showError = false;
@@ -72,71 +71,93 @@ class _TextBoxState extends State<TextBox> {
     double objectWidth = screenWidth * 0.75;
     late UserData? user;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('G10A'),
-      ),
-      body: Center(
-        child: SizedBox(
-          width: objectWidth,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                height: 100,
-                child: TextFormField(
-                  controller: userNameContr,
-                  decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
-                      errorText: showError ? errorMsg : null,
-                      labelText: 'User Name'),
-                ),
-              ),
-              SizedBox(
-                height: 100,
-                child: TextFormField(
-                  controller: simNumberContr,
-                  decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
-                      errorText: showError ? errorMsg : null,
-                      labelText: 'Sim Number'),
-                ),
-              ),
-              SubmitButton(
-                buttonText: 'Create User',
-                onButtonPressed: () {
-                  // Validating the user input to the sim number field
-                  if (isNumeric(simNumberContr.text) == false) {
-                    showError = true;
-                    errorMsg = 'Letters are no allowed';
-                  } else {
-                    user = UserData(
-                      username: userNameContr.text,
-                      simNumber: simNumberContr.text,
-                    );
-                    showToastmessage(context, user!.username, user!.simNumber);
-                  }
-                },
-              ),
-              SubmitButton(
-                buttonText: buttonText,
-                onButtonPressed: () {
-                  // Validating the user input to the sim number field
-                  setState(() {
-                    if (user == null) {
-                      buttonText = 'No user created';
-                    } else {
-                      buttonText = user!.username;
-                    }
-                  });
-                },
-              ),
-            ],
+    return Form(
+        key: _formKey,
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('G10A', style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.red,
           ),
-        ),
-      ),
-    );
+          body: Center(
+            child: SizedBox(
+              width: objectWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    height: 100,
+                    child: TextFormField(
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a user name';
+                        }
+                        return null;
+                      },
+                      controller: userNameContr,
+                      decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          // errorText: showError ? errorMsg : null,
+                          labelText: 'User Name'),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 100,
+                    child: TextFormField(
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a sim number';
+                        } else if (isNumeric(value) == false) {
+                          return 'Only numbers are allowed';
+                        } else if (value.length != 10) {
+                          return 'Sim number must be 10 digits long';
+                        }
+                        return null;
+                      },
+                      controller: simNumberContr,
+                      decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          //errorText: showError ? errorMsg : null,
+                          labelText: 'Sim Number'),
+                    ),
+                  ),
+                  SubmitButton(
+                    buttonText: 'Create User',
+                    onButtonPressed: () {
+                      // Validating the user input to the sim number field
+                      if (_formKey.currentState!.validate()) {
+                        user = UserData(
+                          username: userNameContr.text,
+                          simNumber: simNumberContr.text,
+                        );
+
+                        //saving the user data to shared preferences
+                        prefs.setString(user!.username, user!.jsonToString());
+
+                        //showing the saved data in a snackbar
+                        showToastmessage(
+                            context, user!.username, user!.simNumber);
+                      }
+                    },
+                  ),
+                  SubmitButton(
+                    buttonText: buttonText,
+                    onButtonPressed: () {
+                      // Validating the user input to the sim number field
+                      setState(() {
+                        if (user == null) {
+                          buttonText = 'No user created';
+                        } else {
+                          buttonText = user!.username;
+                        }
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ));
   }
 }
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class UserData {
   String username;
   String simNumber;
@@ -10,5 +12,13 @@ class UserData {
       'simNumber': simNumber,
     };
     return userData;
+  }
+
+  String jsonToString() {
+    Map<String, String> userData = {
+      'username': username,
+      'simNumber': simNumber,
+    };
+    return jsonEncode(userData);
   }
 }
