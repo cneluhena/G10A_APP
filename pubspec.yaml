@@ -30,10 +30,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
+  flutter_sms:
+    path: C:/Users/cnelu/Downloads/flutter_sms-master/flutter_sms-master
+  permission_handler: ^11.1.0
+  flutter_launcher_icons: ^0.13.1
   cupertino_icons: ^1.0.2
   string_validator: ^1.0.2
   shared_preferences: ^2.2.2

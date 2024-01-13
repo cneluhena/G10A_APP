@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:string_validator/string_validator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'user_data.dart';
+import 'basicfunctions.dart';
 
 GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -31,6 +32,7 @@ class TextBox extends StatefulWidget {
 class _TextBoxState extends State<TextBox> {
   final userNameContr = TextEditingController();
   final simNumberContr = TextEditingController();
+  final passwordContr = TextEditingController();
   late SharedPreferences prefs;
   final _formKey = GlobalKey<FormState>();
 
@@ -58,6 +60,16 @@ class _TextBoxState extends State<TextBox> {
   void showToastmessage(BuildContext context, String name, String simNumber) {
     SnackBar snackBar = SnackBar(
       content: Text('$name has been created with $simNumber'),
+    );
+
+    // Find the ScaffoldMessenger in the widget tree
+    // and use it to show a SnackBar.
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  void invalidInputmessage(BuildContext context) {
+    SnackBar snackBar = const SnackBar(
+      content: Text('Enter valid data'),
     );
 
     // Find the ScaffoldMessenger in the widget tree
@@ -121,6 +133,20 @@ class _TextBoxState extends State<TextBox> {
                           labelText: 'Sim Number'),
                     ),
                   ),
+                  SizedBox(
+                    height: 100,
+                    child: TextFormField(
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a strong password';
+                        }
+                        return null;
+                      },
+                      controller: passwordContr,
+                      decoration: const InputDecoration(
+                          border: OutlineInputBorder(), labelText: 'Password'),
+                    ),
+                  ),
                   SubmitButton(
                     buttonText: 'Create User',
                     onButtonPressed: () {
@@ -129,6 +155,7 @@ class _TextBoxState extends State<TextBox> {
                         user = UserData(
                           username: userNameContr.text,
                           simNumber: simNumberContr.text,
+                          password: passwordContr.text,
                         );
 
                         //saving the user data to shared preferences
@@ -137,6 +164,15 @@ class _TextBoxState extends State<TextBox> {
                         //showing the saved data in a snackbar
                         showToastmessage(
                             context, user!.username, user!.simNumber);
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => IconButtonExampleApp(
+                                  prefs: prefs, username: user!.username)),
+                        );
+                      } else {
+                        invalidInputmessage(context);
                       }
                     },
                   ),
@@ -151,6 +187,8 @@ class _TextBoxState extends State<TextBox> {
                           buttonText = user!.username;
                         }
                       });
+                      final String = prefs.getString(user!.username);
+                      print(String);
                     },
                   ),
                 ],
